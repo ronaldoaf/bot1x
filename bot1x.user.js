@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 localStorage._1xbet_user='81821767';
-localStorage._1xbet_user='rr842135';
+localStorage._1xbet_pass='rr842135';
 
 const TYPE_OVER=9;
 const TYPE_UNDER=10;
