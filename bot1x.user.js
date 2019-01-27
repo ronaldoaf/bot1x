@@ -147,8 +147,31 @@ bot.loadStats=function(){
                    });
                    jogos_1x[i].jogo_tc=jogo_atual;
                });
-               console.log(jogos_1x);
-               console.log(jogos_tc);
+               //console.log(jogos_1x);
+               //console.log(jogos_tc);
+
+               $(jogos_1x).each(function(){
+                   if (this.jogo_tc===null) return;
+                   var s_g=this.jogo_tc.gh+this.jogo_tc.ga;
+                   var s_c=this.jogo_tc.ch+this.jogo_tc.ca;
+                   var s_s=this.jogo_tc.sh+this.jogo_tc.sa;
+                   var s_da=this.jogo_tc.dah+this.jogo_tc.daa;
+                   var s_r=this.jogo_tc.rh+this.jogo_tc.ra;
+                   var d_g=Math.abs(this.jogo_tc.gh-this.jogo_tc.ga);
+                   var d_c=Math.abs(this.jogo_tc.ch-this.jogo_tc.ca);
+                   var d_s=Math.abs(this.jogo_tc.sh-this.jogo_tc.sa);
+                   var d_da=Math.abs(this.jogo_tc.dah-this.jogo_tc.daa);
+                   var goal=this.goal;
+                   var probU=1/this.under/(1/this.over+1/this.under);
+                   var probU_diff=Math.abs(probU-0.5);
+                   var mod0=Number(this.goal % 1===0);
+                   //console.log([s_g,s_c,s_s,s_da,s_r,d_g,d_c,d_s,d_da,goal,probU,probU_diff,mod0]);
+                   pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
+                  // console.log(pl_u);
+                   if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.floor(user_balance.getMainBalance()*0.02));
+                   if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.floor(user_balance.getMainBalance()*0.02));
+               });
+
          });
      });
 };
@@ -158,12 +181,12 @@ bot.loop=function(){
     if (location.href!='https://1xbet.mobi/live/Football/') location.href='https://1xbet.mobi/live/Football/';
 
     if( bot.login.checkLogin() ) bot.login.doLogin();
+
+    bot.loadStats();
 };
 
 
 bot.init();
 
-setInterval(bot.loop, _1s);
+setInterval(bot.loop,5* _1s);
 
-console.log( similar_text("calavera u19_26 de febrero u19", "calavera cf u19_cd 26 de febrero u19") );
-console.log( removeDiacritics('não são') );
