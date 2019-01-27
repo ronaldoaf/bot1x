@@ -4,11 +4,12 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       You
+// @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
+// @require      https://cdn.jsdelivr.net/gh/farzher/fuzzysort@master/fuzzysort.js
 // @match        https://1xbet.mobi/*
 // @grant        none
 // ==/UserScript==
 
-function similar_text(r,t){if(percent=100,null===r||null===t||void 0===r||void 0===t)return 0;var e,s,i,n,l=0,u=0,a=0,o=(r+="").length,c=(t+="").length;for(e=0;e<o;e++)for(s=0;s<c;s++){for(i=0;e+i<o&&s+i<c&&r.charAt(e+i)===t.charAt(s+i);i++);i>a&&(a=i,l=e,u=s)}return(n=a)&&(l&&u&&(n+=similar_text(r.substr(0,l),t.substr(0,u))),l+a<o&&u+a<c&&(n+=similar_text(r.substr(l+a,o-l-a),t.substr(u+a,c-u-a)))),percent?200*n/(o+c):n};
 const TYPE_OVER=9;
 const TYPE_UNDER=10;
 
@@ -16,6 +17,18 @@ const _1ds=100;
 const _1s=1000;
 const _1m=60*_1s;
 const _1h=60*_1m;
+
+const CORTE_REL=66;
+
+function rel_1x_tc(j1x,jtc){
+    //console.log( [removeDiacritics((j1x.home+'_'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'_'+jtc.away).toLocaleLowerCase())] );
+     //var f=fuzzysort.single( removeDiacritics((j1x.home+'+'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase()) );
+    //console.log([removeDiacritics((j1x.home+'_'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'_'+jtc.away).toLocaleLowerCase())]);
+    var a=removeDiacritics((j1x.home+'+'+j1x.away).toLocaleLowerCase());
+    var b=removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase());
+    return (similar_text(a,b)*200/(a.length+b.length));
+}
+
 
 window.bot={
    init:function(){
@@ -97,11 +110,45 @@ bot.jaFoiApostado=function(gameid, type){
 bot.loadStats=function(){
      $.getScript('https://bot-ao.com/stats_new.js',function(){
          $.get('https://1xbet.mobi/LiveFeed/Get1x2_VZip?sports=1&count=1000&lng=en&mode=4&country=1&getEmpty=true&mobi=true',function(data){
-               console.log(data);
-         });
-          var stats=JSON.parse(localStorage.stats);
-         $(stats).each(function(){
-              if(this.time=='half')  console.log(this);
+                var jogos_1x=[];
+                var jogos_tc=[];
+                $(data.Value).each(function(){
+                   if(this.SC.TR==-1 && this.SC.TS==2700) {
+                       //console.log(this);
+                       var jogo={
+                           gameid:this.I,
+                           home:this.O1,
+                           away:this.O2,
+                           goal: null,
+                           over: null,
+                           under: null
+                       };
+                       $(this.E).each(function(){
+                          if(this.T==9)  jogo.goal=this.P;
+                          if(this.T==9 ) jogo.over=this.C;
+                          if(this.T==10) jogo.under=this.C;
+                       });
+                       //console.log(jogo);
+                       jogos_1x.push(jogo);
+                   }
+                });
+                $(JSON.parse(localStorage.stats)).each(function(){
+                    if(this.time=='half') jogos_tc.push(this);
+               });
+               $(jogos_1x).each(function(i,j1x){
+                   var percent_atual=CORTE_REL;
+                   var jogo_atual=null;
+                   $(jogos_tc).each(function(j,jtc){
+                      var percent=rel_1x_tc(j1x,jtc);
+                      if(percent>percent_atual){
+                          jogo_atual=jtc;
+                          percent_atual=percent;
+                      }
+                   });
+                   jogos_1x[i].jogo_tc=jogo_atual;
+               });
+               console.log(jogos_1x);
+               console.log(jogos_tc);
          });
      });
 };
@@ -118,3 +165,5 @@ bot.init();
 
 setInterval(bot.loop, _1s);
 
+console.log( similar_text("calavera u19_26 de febrero u19", "calavera cf u19_cd 26 de febrero u19") );
+console.log( removeDiacritics('não são') );
