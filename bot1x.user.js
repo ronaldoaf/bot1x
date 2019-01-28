@@ -1,17 +1,14 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.1.3
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
-// @require      https://cdn.jsdelivr.net/gh/farzher/fuzzysort@master/fuzzysort.js
 // @match        https://1xbet.mobi/*
 // @grant        none
 // ==/UserScript==
 
-localStorage._1xbet_user='81821767';
-localStorage._1xbet_pass='rr842135';
 
 const TYPE_OVER=9;
 const TYPE_UNDER=10;
@@ -23,15 +20,15 @@ const _1h=60*_1m;
 
 const CORTE_REL=66;
 
+//Retorna a similaridade entre os jogos 1xbet e totalcorner baseado no home e away
 function rel_1x_tc(j1x,jtc){
-    //console.log( [removeDiacritics((j1x.home+'_'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'_'+jtc.away).toLocaleLowerCase())] );
-     //var f=fuzzysort.single( removeDiacritics((j1x.home+'+'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase()) );
-    //console.log([removeDiacritics((j1x.home+'_'+j1x.away).toLocaleLowerCase()), removeDiacritics((jtc.home+'_'+jtc.away).toLocaleLowerCase())]);
     var a=removeDiacritics((j1x.home+'+'+j1x.away).toLocaleLowerCase());
     var b=removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase());
     return (similar_text(a,b)*200/(a.length+b.length));
 }
 
+//Recarrega a pagina a cada 15 minutos
+setInterval(function(){  location.reload(); }, 15*_1m);
 
 window.bot={
    init:function(){
@@ -110,14 +107,54 @@ bot.placeBet=function(gameid, type, stake){
 bot.jaFoiApostado=function(gameid, type){
       return (bot.mybets.getBets(gameid, type).length>0);
 };
+
+bot.relacionaJogos=function(jogos_1x,jogos_tc){
+    $(jogos_1x).each(function(i,j1x){
+        var percent_atual=CORTE_REL;
+        var jogo_atual=null;
+        $(jogos_tc).each(function(j,jtc){
+            var percent=rel_1x_tc(j1x,jtc);
+            if(percent>percent_atual){
+                jogo_atual=jtc;
+                percent_atual=percent;
+            }
+        });
+        jogos_1x[i].jogo_tc=jogo_atual;
+    });
+    return jogos_1x;
+};
+//Recebe um array de jogos_1x que possui o jogo_tc relaciona e baseado  na regressão faz as apostas
+bot.fazApostas=function(jogos_1x){
+    $(jogos_1x).each(function(){
+        if (this.jogo_tc===null) return;
+        var s_g=this.jogo_tc.gh+this.jogo_tc.ga;
+        var s_c=this.jogo_tc.ch+this.jogo_tc.ca;
+        var s_s=this.jogo_tc.sh+this.jogo_tc.sa;
+        var s_da=this.jogo_tc.dah+this.jogo_tc.daa;
+        var s_r=this.jogo_tc.rh+this.jogo_tc.ra;
+        var d_g=Math.abs(this.jogo_tc.gh-this.jogo_tc.ga);
+        var d_c=Math.abs(this.jogo_tc.ch-this.jogo_tc.ca);
+        var d_s=Math.abs(this.jogo_tc.sh-this.jogo_tc.sa);
+        var d_da=Math.abs(this.jogo_tc.dah-this.jogo_tc.daa);
+        var goal=this.goal;
+        var probU=1/this.under/(1/this.over+1/this.under);
+        var probU_diff=Math.abs(probU-0.5);
+        var mod0=Number(this.goal % 1===0);
+        pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
+        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.floor(user_balance.getMainBalance()*0.02));
+        if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.floor(user_balance.getMainBalance()*0.02));
+    });
+};
+//Carrega stats do totalcorner e da própria 1xbet, faz o relacionamento e aposta se atender os critérios
 bot.loadStats=function(){
      $.getScript('https://bot-ao.com/stats_new.js',function(){
          $.get('https://1xbet.mobi/LiveFeed/Get1x2_VZip?sports=1&count=1000&lng=en&mode=4&country=1&getEmpty=true&mobi=true',function(data){
                 var jogos_1x=[];
                 var jogos_tc=[];
+                //Lê os jogos carregados no ajax
                 $(data.Value).each(function(){
+                   //Se estiver no  Half Time, coloca no array jogo_1x
                    if(this.SC.TR==-1 && this.SC.TS==2700) {
-                       //console.log(this);
                        var jogo={
                            gameid:this.I,
                            home:this.O1,
@@ -127,54 +164,24 @@ bot.loadStats=function(){
                            under: null
                        };
                        $(this.E).each(function(){
-                          if(this.T==9)  jogo.goal=this.P;
-                          if(this.T==9 ) jogo.over=this.C;
-                          if(this.T==10) jogo.under=this.C;
+                          if(this.T==TYPE_OVER)  jogo.goal=this.P;
+                          if(this.T==TYPE_OVER ) jogo.over=this.C;
+                          if(this.T==TYPE_UNDER) jogo.under=this.C;
                        });
-                       //console.log(jogo);
                        jogos_1x.push(jogo);
                    }
                 });
+
+                //Lê as stats carregada do totalcorner, salvas no localStorage, se o jogo estiver no  Half Time, coloca no array jogo_tc
                 $(JSON.parse(localStorage.stats)).each(function(){
                     if(this.time=='half') jogos_tc.push(this);
-               });
-               $(jogos_1x).each(function(i,j1x){
-                   var percent_atual=CORTE_REL;
-                   var jogo_atual=null;
-                   $(jogos_tc).each(function(j,jtc){
-                      var percent=rel_1x_tc(j1x,jtc);
-                      if(percent>percent_atual){
-                          jogo_atual=jtc;
-                          percent_atual=percent;
-                      }
-                   });
-                   jogos_1x[i].jogo_tc=jogo_atual;
-               });
-               //console.log(jogos_1x);
-               //console.log(jogos_tc);
+                });
 
-               $(jogos_1x).each(function(){
-                   if (this.jogo_tc===null) return;
-                   var s_g=this.jogo_tc.gh+this.jogo_tc.ga;
-                   var s_c=this.jogo_tc.ch+this.jogo_tc.ca;
-                   var s_s=this.jogo_tc.sh+this.jogo_tc.sa;
-                   var s_da=this.jogo_tc.dah+this.jogo_tc.daa;
-                   var s_r=this.jogo_tc.rh+this.jogo_tc.ra;
-                   var d_g=Math.abs(this.jogo_tc.gh-this.jogo_tc.ga);
-                   var d_c=Math.abs(this.jogo_tc.ch-this.jogo_tc.ca);
-                   var d_s=Math.abs(this.jogo_tc.sh-this.jogo_tc.sa);
-                   var d_da=Math.abs(this.jogo_tc.dah-this.jogo_tc.daa);
-                   var goal=this.goal;
-                   var probU=1/this.under/(1/this.over+1/this.under);
-                   var probU_diff=Math.abs(probU-0.5);
-                   var mod0=Number(this.goal % 1===0);
-                   //console.log([s_g,s_c,s_s,s_da,s_r,d_g,d_c,d_s,d_da,goal,probU,probU_diff,mod0]);
-                   pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
-                  // console.log(pl_u);
-                   if(pl_u>=0.025 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.floor(user_balance.getMainBalance()*0.02));
-                   if(pl_u<=-0.09 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.floor(user_balance.getMainBalance()*0.02));
-               });
+                //Em cada jogo em jogos_1x vai adicionar um propriedade chamada jogo_tc, onde estará objeto do jogo correspondente no totalcorner
+                jogos_1x=bot.relacionaJogos(jogos_1x,jogos_tc);
 
+                //Onde toda mágica acontece, a partir da lista de jogos, apartir da regressão faz apostas
+               bot.fazApostas(jogos_1x);
          });
      });
 };
@@ -192,4 +199,9 @@ bot.loop=function(){
 bot.init();
 
 setInterval(bot.loop,5* _1s);
+
+
+
+
+
 
