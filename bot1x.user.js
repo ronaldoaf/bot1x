@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.1.5
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -20,10 +20,12 @@ const _1h=60*_1m;
 
 const CORTE_REL=66;
 
+const REDUTOR=0.7;
+
 //Retorna a similaridade entre os jogos 1xbet e totalcorner baseado no home e away
 function rel_1x_tc(j1x,jtc){
     var a=removeDiacritics((j1x.home+'+'+j1x.away).toLocaleLowerCase());
-    var b=removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase());
+    var b=removeDiacritics((jtc.home+'+'+jtc.away).toLocaleLowerCase()).split('reserves').join('ii');
     return (similar_text(a,b)*200/(a.length+b.length));
 }
 
@@ -93,7 +95,7 @@ bot.placeBet=function(gameid, type, stake){
             var e=data.Value.Coupon.Events[0];
             bot.mybets.addBet({
                 id:data.Value.Id,
-                timestamp: Number(data.Value.Dt.replace('/Date(','').replace(')/','')),    //Dt vem no formato  "/Date(1548510333975)/"
+                timestamp: +new Date(),    //Dt vem no formato  "/Date(1548510333975)/"
                 gameid:e.GameId,
                 type:e.Type,
                 param:e.Param,
@@ -102,6 +104,9 @@ bot.placeBet=function(gameid, type, stake){
             });
         }
     });
+};
+bot.getBalance=function(){
+    return user_balance.allAccounts[0].money+user_balance.allAccounts[0].summ_unplaced_bets*REDUTOR;
 };
 
 bot.jaFoiApostado=function(gameid, type){
@@ -141,8 +146,8 @@ bot.fazApostas=function(jogos_1x){
         var probU_diff=Math.abs(probU-0.5);
         var mod0=Number(this.goal % 1===0);
         pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
-        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.floor(user_balance.getMainBalance()*0.02));
-        //if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.floor(user_balance.getMainBalance()*0.02));
+        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.02));
+        //if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.round(bot.getBalance()*0.02));
     });
 };
 //Carrega stats do totalcorner e da própria 1xbet, faz o relacionamento e aposta se atender os critérios
