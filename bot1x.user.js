@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.5
+// @version      0.1.6
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -21,6 +21,8 @@ const _1h=60*_1m;
 const CORTE_REL=66;
 
 const REDUTOR=0.7;
+
+const ERROS_ATE_PERDIR_CREDENCIAIS=7;
 
 //Retorna a similaridade entre os jogos 1xbet e totalcorner baseado no home e away
 function rel_1x_tc(j1x,jtc){
@@ -69,7 +71,7 @@ bot.login={
      checkLogin:function(){
          return !user_balance.getUserId();
      },
-    doLogin:function(){
+    doLogin:function(cont=0){
         $('#idOrMail').val(localStorage._1xbet_user);
         $('#uPassword').val(localStorage._1xbet_pass);
         $('#userConButton').click();
@@ -78,9 +80,19 @@ bot.login={
             if( $('button.swal2-confirm').length>0 ){
                 $('button.swal2-confirm').click();
                 clearInterval(loop);
-                setTimeout(bot.login.doLogin, _1s);
+                setTimeout(function(){ bot.login.doLogin(cont+1); }, _1s);
             }
         },_1ds);
+        //Se der erros demais para e mostra uma tela pedindos as credenciais da 1xbet
+        if(cont>=ERROS_ATE_PERDIR_CREDENCIAIS) bot.login.telaCredenciais();
+    },
+    telaCredenciais:function(){
+        $('body').html('<center><br><div style="font-size:3vw;color:white; border:1px solid;"><br>Digite o seu usuário da 1xbet<br><input id="usuario" /><br><br>Digite a sua senha da 1xbet<br><input id="senha" /><br><br><button  id="salvar_senha"" style="background-color: lightgray;font-size:3vw;border:1px solid; id="salvar_senha">Salvar</button><br><br></div></center>');
+        $('#salvar_senha').click(function(){
+            localStorage._1xbet_pass=$('#senha').val();
+            localStorage._1xbet_user=$('#usuario').val();
+            location.reload();
+        });
     }
 };
 
@@ -95,7 +107,7 @@ bot.placeBet=function(gameid, type, stake){
             var e=data.Value.Coupon.Events[0];
             bot.mybets.addBet({
                 id:data.Value.Id,
-                timestamp: +new Date(),    //Dt vem no formato  "/Date(1548510333975)/"
+                timestamp: +new Date(),
                 gameid:e.GameId,
                 type:e.Type,
                 param:e.Param,
