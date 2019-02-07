@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8
+// @version      0.1.9
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -158,7 +158,7 @@ bot.fazApostas=function(jogos_1x){
         var probU_diff=Math.abs(probU-0.5);
         var mod0=Number(this.goal % 1===0);
         pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
-        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.05));
+        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.06));
         //if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.round(bot.getBalance()*0.02));
     });
 };
