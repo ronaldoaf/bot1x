@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.9
+// @version      0.1.10
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -101,7 +101,7 @@ bot.placeBet=function(gameid, type, stake){
     var sel_obj=$('[data-gameid='+gameid+'][data-type='+type+']');
     var param=sel_obj.attr('data-param');
     var odds=sel_obj.attr('data-coef');
-    $.post('/datalinelive/putbetscommon','UserId='+user_balance.getUserId()+'&Events[0][GameId]='+gameid+'&Events[0][Type]='+type+'&Events[0][Coef]='+odds+'&Events[0][Param]='+param+'&Events[0][PlayerId]=0&Events[0][Kind]=1&Events[0][Expired]=0&Events[0][Price]=0&Events[0][InstrumentId]=0&Events[0][Seconds]=0&partner=1&CfView=0&Summ='+stake+'&Lng=en&Vid=0&hash=33d976294881233c1d6704e825a4b181&Source=110&CheckCf=0&Live=true&notWait=true', function(data){
+    $.post('/datalinelive/putbetscommon','UserId='+user_balance.getUserId()+'&Events[0][GameId]='+gameid+'&Events[0][Type]='+type+'&Events[0][Coef]='+odds+'&Events[0][Param]='+param+'&Events[0][PlayerId]=0&Events[0][Kind]=1&Events[0][Expired]=0&Events[0][Price]=0&Events[0][InstrumentId]=0&Events[0][Seconds]=0&partner=1&CfView=0&Summ='+stake+'&Lng=en&Vid=0&hash='+Core.cookie.get('uhash', 0)+'&Source=110&CheckCf=0&Live=true&notWait=true', function(data){
         console.log(data);
         if(data.Success){
             var e=data.Value.Coupon.Events[0];
@@ -158,7 +158,7 @@ bot.fazApostas=function(jogos_1x){
         var probU_diff=Math.abs(probU-0.5);
         var mod0=Number(this.goal % 1===0);
         pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
-        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.06));
+        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.04));
         //if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.round(bot.getBalance()*0.02));
     });
 };
