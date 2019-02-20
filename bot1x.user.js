@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.10
+// @version      0.1.11
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -164,7 +164,7 @@ bot.fazApostas=function(jogos_1x){
 };
 //Carrega stats do totalcorner e da própria 1xbet, faz o relacionamento e aposta se atender os critérios
 bot.loadStats=function(){
-     $.getScript('https://bot-ao.com/stats_new.js',function(){
+     $.getScript('https://bot-ao.com/stats_new.3.18.js',function(){
          $.get('https://1xbet.mobi/LiveFeed/Get1x2_VZip?sports=1&count=1000&lng=en&mode=4&country=1&getEmpty=true&mobi=true',function(data){
                 var jogos_1x=[];
                 var jogos_tc=[];
