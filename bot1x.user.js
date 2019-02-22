@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.2.1
+// @version      0.3.0
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -17,6 +17,7 @@ const CONFIG={
 
 const TYPE_OVER=9;
 const TYPE_UNDER=10;
+const ERROR_CODE_MAXIMUM_STAKE=109;
 
 const _1ds=100;
 const _1s=1000;
@@ -119,6 +120,13 @@ bot.placeBet=function(gameid, type, stake){
                 stake: data.Value.Coupon.Summ,
                 odds: data.Value.Coupon.Coef
             });
+        }
+        else{
+            //Se der error ter atingido o stake máximo tenta de novo com o stake máximo
+            if(  data.ErrorCode==ERROR_CODE_MAXIMUM_STAKE){
+                var maximum_stake=Number(data.Error.split('The maximum stake is')[1] );
+                bot.placeBet(gameid, type, stake);
+            }            
         }
     });
 };
@@ -233,9 +241,3 @@ bot.loop=function(){
 bot.init();
 
 setInterval(bot.loop,5* _1s);
-
-
-
-
-
-
