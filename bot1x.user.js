@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.1.11
+// @version      0.2.0
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -9,6 +9,11 @@
 // @grant        none
 // ==/UserScript==
 
+const CONFIG={
+    min: 0.015,
+    max: 0.15,
+    kelly:0.75
+};
 
 const TYPE_OVER=9;
 const TYPE_UNDER=10;
@@ -140,6 +145,13 @@ bot.relacionaJogos=function(jogos_1x,jogos_tc){
     });
     return jogos_1x;
 };
+
+bot.stakeUnder=function(pl_u,mod0,oddsU){
+    var percent=pl_u/(oddsU-1)*(mod0==1 ? 1.3 : 1)*CONFIG.kelly;
+    return Math.round(bot.getBalance()*(percent>CONFIG.max ? CONFIG.max : percent  ));
+}
+
+
 //Recebe um array de jogos_1x que possui o jogo_tc relaciona e baseado  na regressão faz as apostas
 bot.fazApostas=function(jogos_1x){
     $(jogos_1x).each(function(){
@@ -153,13 +165,17 @@ bot.fazApostas=function(jogos_1x){
         var d_c=Math.abs(this.jogo_tc.ch-this.jogo_tc.ca);
         var d_s=Math.abs(this.jogo_tc.sh-this.jogo_tc.sa);
         var d_da=Math.abs(this.jogo_tc.dah-this.jogo_tc.daa);
+        var oddsU=this.under;
+        var oddsO=this.over;
         var goal=this.goal;
         var probU=1/this.under/(1/this.over+1/this.under);
         var probU_diff=Math.abs(probU-0.5);
         var mod0=Number(this.goal % 1===0);
-        pl_u= 0.0091 +     -0.0761 * s_g +     -0.0026 * s_c +     -0.0002 * s_da +     -0.0068 * s_s +     -0.0218 * s_r +     -0.0248 * d_g +     -0.0012 * d_da +     -0.0014 * d_s +      0.0746 * goal +     -0.3222 * probU_diff +      0.0002 * mod0;
-        if(pl_u>=0.02 && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, Math.round(bot.getBalance()*0.04));
-        //if(pl_u<=-0.08 && !bot.jaFoiApostado(this.gameid, TYPE_OVER) )  bot.placeBet(this.gameid, TYPE_OVER, Math.round(bot.getBalance()*0.02));
+        
+        pl_u=(-0.0222 * s_g +     -0.0049 * s_c +     -0.0002 * s_da +     -0.0063 * s_s +     -0.0217 * d_g +     -0.0028 * d_s +      0.0166 * goal +      0.0557 * goal_diff +      0.0755 * oddsU +     -0.4233 * probU_diff +      0.0185 * mod0 +     -0.14)>0 ?  -0.139  * s_g +     -0.0064 * s_c +     -0.0006 * s_da +     -0.0056 * s_s +     -0.0398 * d_g +     -0.0044 * d_s +      0.1356 * goal +     -0.0302 * goal_diff +      0.1305 * oddsU +     -0.8786 * probU_diff +     -0.2414 : -1;  
+
+        if(pl_u>=CONFIG.min && !bot.jaFoiApostado(this.gameid, TYPE_UNDER) )  bot.placeBet(this.gameid, TYPE_UNDER, bot.stakeUnder(pl_u,mod0,oddsU) );
+       
     });
 };
 //Carrega stats do totalcorner e da própria 1xbet, faz o relacionamento e aposta se atender os critérios
