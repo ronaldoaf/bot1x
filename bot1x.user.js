@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
+// @version      0.2.1
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -168,6 +168,7 @@ bot.fazApostas=function(jogos_1x){
         var oddsU=this.under;
         var oddsO=this.over;
         var goal=this.goal;
+        var goal_diff=goal-s_g;
         var probU=1/this.under/(1/this.over+1/this.under);
         var probU_diff=Math.abs(probU-0.5);
         var mod0=Number(this.goal % 1===0);
