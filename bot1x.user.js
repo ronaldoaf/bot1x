@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bo1tx
 // @namespace    http://tampermonkey.net/
-// @version      0.3.1
+// @version      0.4.0
 // @description  try to take over the world!
 // @author       You
 // @require      https://cdn.jsdelivr.net/gh/ronaldoaf/bot1x@d90bffb0805ed7fff098944bd003cb322d0e3493/auxiliar.min.js?
@@ -230,7 +230,7 @@ bot.loadStats=function(){
 
 bot.loop=function(){
     //Não estiver na url correta direciona;
-    if (location.href!='https://1xbet.mobi/live/Football/') location.href='https://1xbet.mobi/live/Football/';
+    if (location.href!='https://1xbet.mobi/en/live/Football/') location.href='https://1xbet.mobi/en/live/Football/';
 
     if( bot.login.checkLogin() ) bot.login.doLogin();
 
